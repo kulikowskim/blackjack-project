@@ -7,10 +7,15 @@
 void tura_gracza(int *suma_gracza, int *blackjack, int *saldo, int stawka);
 void tura_bota(int *suma_bota);
 void sprawdz_wynik(int suma_gracza, int suma_bota, int blackjack, int *saldo, int stawka);
-int zapytaj_split(int *pierwsza_karta, int *druga_karta);
 void double_down(int *suma_gracza);
+int przelicz_asy(int suma, int liczba_asow);
+
+void ustaw_kodowanie_konsoli() {
+    SetConsoleOutputCP(CP_UTF8);
+}
 
 int main() {
+    ustaw_kodowanie_konsoli();
     srand(time(NULL));
 
     int saldo;
@@ -24,6 +29,7 @@ int main() {
 
         if (saldo <= 0) {
             printf("Nie masz wystarczająco pieniędzy, aby kontynuować grę. Gra zakończona.\n");
+            Sleep(2000);
             break;
         }
 
@@ -37,10 +43,12 @@ int main() {
         }
 
         printf("Twoje karty:\n");
+        Sleep(1000);
         tura_gracza(&suma_gracza, &blackjack, &saldo, stawka);
 
         if (!blackjack && suma_gracza <= 21) {
             printf("Tura bota:\n");
+            Sleep(1000);
             tura_bota(&suma_bota);
         }
 
@@ -57,25 +65,25 @@ int main() {
 
 void tura_gracza(int *suma_gracza, int *blackjack, int *saldo, int stawka) {
     int dobiera = 1;
+    int liczba_asow = 0;
 
     int pierwsza_karta = karta();
     int druga_karta = karta();
+
+    if (pierwsza_karta == 11) liczba_asow++;
+    if (druga_karta == 11) liczba_asow++;
+
     *suma_gracza = pierwsza_karta + druga_karta;
+    *suma_gracza = przelicz_asy(*suma_gracza, liczba_asow);
     printf("Suma: %d\n", *suma_gracza);
 
-    if (pierwsza_karta == druga_karta) {
-        if (zapytaj_split(&pierwsza_karta, &druga_karta)) {
-            printf("Rozdzielono karty!\n");
-            *suma_gracza = pierwsza_karta; // Pierwsza karta staje się jedyną kartą w pierwszej ręce
-            tura_gracza(suma_gracza, blackjack, saldo, stawka); // Rekurencyjne wywołanie dla drugiej ręki
-            return;
-        }
-    }
+    Sleep(1000);
 
     if (*suma_gracza == 21) {
         printf("Blackjack! Wygrywasz automatycznie!\n");
         *blackjack = 1;
         *saldo += stawka * 1.5;
+        Sleep(2000);
         return;
     }
 
@@ -89,6 +97,7 @@ void tura_gracza(int *suma_gracza, int *blackjack, int *saldo, int stawka) {
         } else {
             stawka *= 2;
             double_down(suma_gracza);
+            Sleep(1000);
             if (*suma_gracza <= 21) {
                 *saldo -= stawka;
             }
@@ -101,53 +110,72 @@ void tura_gracza(int *suma_gracza, int *blackjack, int *saldo, int stawka) {
         scanf("%d", &dobiera);
 
         if (dobiera) {
-            *suma_gracza += karta();
+            int nowa_karta = karta();
+            if (nowa_karta == 11) liczba_asow++;
+            *suma_gracza += nowa_karta;
+            *suma_gracza = przelicz_asy(*suma_gracza, liczba_asow);
+
             printf("Suma: %d\n", *suma_gracza);
+            Sleep(1000);
         }
 
         if (*suma_gracza > 21) {
             printf("Bust! Przegrywasz!\n");
             *saldo -= stawka;
+            Sleep(2000);
             return;
         }
     }
 }
 
 void tura_bota(int *suma_bota) {
-    *suma_bota += karta();
-    *suma_bota += karta();
+    int liczba_asow = 0;
+    int pierwsza_karta = karta();
+    int druga_karta = karta();
+
+    if (pierwsza_karta == 11) liczba_asow++;
+    if (druga_karta == 11) liczba_asow++;
+
+    *suma_bota = pierwsza_karta + druga_karta;
+    *suma_bota = przelicz_asy(*suma_bota, liczba_asow);
+
     printf("Suma bota: %d\n", *suma_bota);
+    Sleep(1000);
 
     while (*suma_bota < 17) {
         printf("Bot dobiera kartę...\n");
-        Sleep(2000); // Opóźnienie dla lepszego efektu
-        *suma_bota += karta();
+        Sleep(1000);
+        int nowa_karta = karta();
+        if (nowa_karta == 11) liczba_asow++;
+        *suma_bota += nowa_karta;
+        *suma_bota = przelicz_asy(*suma_bota, liczba_asow);
+
         printf("Suma bota: %d\n", *suma_bota);
+        Sleep(1000);
 
         if (*suma_bota > 21) {
             printf("Bot bust! Wygrywasz!\n");
+            Sleep(2000);
             return;
         }
     }
 }
 
-int zapytaj_split(int *pierwsza_karta, int *druga_karta) {
-    printf("Masz dwie takie same karty (%d, %d). Czy chcesz je rozdzielić (split)? (1 - tak, 0 - nie): ", *pierwsza_karta, *druga_karta);
-    int chce_split;
-    scanf("%d", &chce_split);
-    if (chce_split) {
-        *druga_karta = karta(); // Nowa karta dla drugiej ręki
-    }
-    return chce_split;
-}
-
 void double_down(int *suma_gracza) {
     printf("Double Down! Podwajanie stawki i dobieranie jednej karty...\n");
-    *suma_gracza += karta();
+    Sleep(1000);
+    int nowa_karta = karta();
+    if (nowa_karta == 11) {
+        *suma_gracza += 11;
+    } else {
+        *suma_gracza += nowa_karta;
+    }
     printf("Ostateczna suma: %d\n", *suma_gracza);
+    Sleep(1000);
 
     if (*suma_gracza > 21) {
         printf("Bust! Przegrywasz!\n");
+        Sleep(2000);
     }
 }
 
@@ -170,4 +198,13 @@ void sprawdz_wynik(int suma_gracza, int suma_bota, int blackjack, int *saldo, in
     } else {
         printf("Remis. Stawka zostaje zwrócona.\n");
     }
+    Sleep(2000);
+}
+
+int przelicz_asy(int suma, int liczba_asow) {
+    while (suma > 21 && liczba_asow > 0) {
+        suma -= 10;
+        liczba_asow--;
+    }
+    return suma;
 }
